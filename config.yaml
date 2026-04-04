@@ -1,0 +1,27 @@
+# Default training configuration for NTIRE 2026 DeepFake Detection
+# Model: ResNet-50 baseline (no pretrained weights download required)
+
+model: resnet  # choices: resnet, vit
+
+data:
+  # Relative to project root
+  shard_dir: data/ntire2026/train
+  val_official_dir: data/ntire2026/val_official
+  train_shards: [0, 1, 2, 3, 4]
+  val_shards: [5]
+
+training:
+  batch_size: 16
+  num_workers: 8
+  lr: 1.0e-3
+  min_lr: 1.0e-6
+  max_epochs: 96
+  min_epochs: 50
+  gradient_clip_val: 5.0
+  class_weights: [1.7, 1.0]
+  gpus: [0, 1, 2, 3]  # GPU indices to use
+
+output:
+  checkpoint_dir: outputs/checkpoints
+  log_dir: outputs/logs
+  prediction_dir: outputs/predictions

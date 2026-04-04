@@ -13,3 +13,11 @@ wheels/
 .venv
 .venv/
 **/.venv/
+
+# Data and outputs (large files)
+data/
+outputs/
+
+# Editor swap files
+*.swp
+*.swo
