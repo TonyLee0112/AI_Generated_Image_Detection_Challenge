@@ -17,6 +17,15 @@ wheels/
 # Data and outputs (large files)
 data/
 outputs/
+dataset/
+RINE/outputs/
+**/outputs/
+*.pt
+*.pth
+*.ckpt
+*.tmp
+*.log
+*.bak
 
 # Editor swap files
 *.swp
