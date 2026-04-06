@@ -1,5 +1,11 @@
 # RINE Module
 
+## Results
+
+| Experiment | Epochs | Best val AUC | Best val_hard AUC | Details |
+|---|---|---|---|---|
+| rine_exp1 + rine_exp1_cont | 9 | 0.9008 | 0.8132 | [rine_exp1_results.md](results/rine_exp1_results.md) |
+
 This directory adds a RINE-based training pipeline to the existing challenge repository.
 Baseline code under `baseline/` is unchanged.
 
