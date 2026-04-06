@@ -173,6 +173,23 @@ Organizers
 
 The AI Security Lab in SMBU has been continuously engaged in multimedia forensics and information security research since 2004, and is among the earliest groups in China to systematically explore this field. In recent years, the team has established a stable research framework focusing on image and video forensics, AI-generated content detection, tampering localization, identity authentication, and privacy protection. This team received the Natural Science Award from the China Society of Image and Graphics (2024) for its research on Multimedia forensics.
 
+## Our Approach
+
+We implement a **RINE detector** (Representation INtErpolation) using frozen CLIP ViT-B/32 features with learnable multi-layer attention pooling.
+
+- **Method details**: [docs/method.md](docs/method.md)
+- **Experiment results**: [experiments/index.md](experiments/index.md)
+- **RINE module**: [RINE/README.md](RINE/README.md)
+- **Local setup guide**: [README_LOCAL.md](README_LOCAL.md)
+
+### Current Best Result
+
+| Model | Epochs | val AUC | val_hard AUC |
+|---|---|---|---|
+| RINE (ViT-B/32) | 9 | **0.9008** | **0.8132** |
+
+Full metrics: [rine_exp1_results.md](RINE/results/rine_exp1_results.md)
+
 ## Citation
 
 If you use this code for your research, please cite our paper.
