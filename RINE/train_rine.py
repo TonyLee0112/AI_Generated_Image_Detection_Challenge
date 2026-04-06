@@ -141,6 +141,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow online model lookup/download from Hugging Face. Default uses local cache only.",
     )
+    parser.add_argument(
+        "--resume-from",
+        type=str,
+        default=None,
+        help="Path to a .pt checkpoint (saved by this script) to load model weights from before training.",
+    )
     return parser.parse_args()
 
 
@@ -534,6 +540,11 @@ def main() -> None:
         print(f"Torch CUDA build: {torch.version.cuda}")
         if next(model.parameters()).device.type != "cuda":
             raise RuntimeError("Model parameters are not on CUDA after model.to(device).")
+
+    if args.resume_from:
+        ckpt = torch.load(args.resume_from, map_location=device)
+        model.load_state_dict(ckpt["model_state"])
+        print(f"Resumed model weights from: {args.resume_from}")
 
     supcon = None
     if args.model == "rine" and args.supcon_weight > 0:

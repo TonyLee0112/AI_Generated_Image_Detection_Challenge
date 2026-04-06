@@ -113,12 +113,15 @@ def make_dataloaders(cfg: dict):
     val_shards = cfg["data"]["val_shards"]
     batch_size = cfg["training"]["batch_size"]
     num_workers = cfg["training"]["num_workers"]
+    image_size = cfg["training"].get("image_size", 1024)
 
     train_dataset = AIGenDetDataset.read_from_shards(
-        shard_dir, shard_nums=train_shards, transform=distort_images
+        shard_dir, shard_nums=train_shards, transform=distort_images,
+        image_size=image_size,
     )
     val_dataset = AIGenDetDataset.read_from_shards(
-        shard_dir, shard_nums=val_shards
+        shard_dir, shard_nums=val_shards,
+        image_size=image_size,
     )
 
     common = dict(
@@ -137,6 +140,8 @@ def make_dataloaders(cfg: dict):
 
 def build_training_module(cfg: dict, checkpoint_dir: str) -> LocalTrainingModule:
     model = BaselineDetector()
+    if cfg["training"].get("compile_model", False):
+        model = torch.compile(model)
     tcfg = cfg["training"]
     module = LocalTrainingModule(
         model=model,
@@ -159,12 +164,26 @@ def build_trainer(cfg: dict) -> pl.Trainer:
     log_dir.mkdir(parents=True, exist_ok=True)
 
     gpu_ids = tcfg.get("gpus", [0])
+    precision = tcfg.get("precision", "32-true")
     logger = CSVLogger(save_dir=str(log_dir), name="resnet")
+
+    # For multi-GPU without NVLink: use DDP with static graph and
+    # gradient_as_bucket_view to reduce PCIe overhead
+    if len(gpu_ids) > 1:
+        from pytorch_lightning.strategies import DDPStrategy
+        strategy = DDPStrategy(
+            find_unused_parameters=False,
+            gradient_as_bucket_view=True,
+            static_graph=True,
+        )
+    else:
+        strategy = "auto"
 
     trainer = pl.Trainer(
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=gpu_ids if torch.cuda.is_available() else 1,
-        strategy="ddp" if len(gpu_ids) > 1 else "auto",
+        strategy=strategy,
+        precision=precision,
         min_epochs=tcfg["min_epochs"],
         max_epochs=tcfg["max_epochs"],
         gradient_clip_val=tcfg["gradient_clip_val"],
@@ -182,13 +201,22 @@ def find_resume_ckpt(cfg: dict) -> str | None:
 
 
 def main():
+    # Prevent numpy/torch worker threads from competing for CPU cores
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("MKL_NUM_THREADS", "1")
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    torch.set_float32_matmul_precision("medium")
+
     cfg = load_config()
     check_data(cfg)
 
     print(f"[INFO] Training with ResNet-50 baseline")
     print(f"[INFO] Train shards: {cfg['data']['train_shards']}")
     print(f"[INFO] Val shards:   {cfg['data']['val_shards']}")
+    print(f"[INFO] Image size:   {cfg['training'].get('image_size', 1024)}")
     print(f"[INFO] Batch size:   {cfg['training']['batch_size']}")
+    print(f"[INFO] Precision:    {cfg['training'].get('precision', '32-true')}")
+    print(f"[INFO] Compile:      {cfg['training'].get('compile_model', False)}")
     print(f"[INFO] GPUs:         {cfg['training']['gpus']}")
 
     train_dl, val_dl = make_dataloaders(cfg)

@@ -11,15 +11,18 @@ data:
   val_shards: [5]
 
 training:
-  batch_size: 16
-  num_workers: 8
+  image_size: 512           # resize target (was 1024; 512 cuts compute ~4x)
+  batch_size: 32            # per-GPU batch size (A5000 24GB can handle this at 512)
+  num_workers: 10           # DataLoader workers per GPU (48 cores / 4 DDP procs ≈ 12)
+  precision: "16-mixed"     # AMP fp16 mixed precision
+  compile_model: true       # torch.compile for fused kernels
   lr: 1.0e-3
   min_lr: 1.0e-6
-  max_epochs: 96
-  min_epochs: 50
+  max_epochs: 5
+  min_epochs: 5
   gradient_clip_val: 5.0
   class_weights: [1.7, 1.0]
-  gpus: [0, 1, 2, 3]  # GPU indices to use
+  gpus: [0, 1, 2, 3]       # GPU indices to use
 
 output:
   checkpoint_dir: outputs/checkpoints

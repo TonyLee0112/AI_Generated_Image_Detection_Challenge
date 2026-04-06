@@ -18,7 +18,7 @@ from aug_utils_train import distort_images
 import csv
 
 class AIGenDetDataset(Dataset):
-    def __init__(self, root_dir, subset_dirs, transform=None):
+    def __init__(self, root_dir, subset_dirs, transform=None, image_size=1024):
         """
         Initialize the dataset from one or more subset directories.
 
@@ -29,10 +29,11 @@ class AIGenDetDataset(Dataset):
             transform (Callable, optional): Optional augmentation/transform
                 applied to the tensor image (expects a callable returning a
                 tuple where the first element is the transformed image).
+            image_size (int): Target image size for resize and center crop.
         """
         self.convert_to_tensor = transforms.Compose([
-            transforms.Resize(1024),
-            transforms.CenterCrop(1024),
+            transforms.Resize(image_size),
+            transforms.CenterCrop(image_size),
             transforms.ToTensor()
         ])
         self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -74,7 +75,7 @@ class AIGenDetDataset(Dataset):
         return sample
 
     @staticmethod
-    def read_from_shards(shard_dir, shard_nums=None, transform=None):
+    def read_from_shards(shard_dir, shard_nums=None, transform=None, image_size=1024):
         """
         Convenience constructor that builds the dataset from shard folders.
 
@@ -84,6 +85,7 @@ class AIGenDetDataset(Dataset):
             shard_nums (List[int], optional): Specific shard indices to use.
                 If None, defaults to shards 0–5.
             transform (Callable, optional): Optional transform to apply.
+            image_size (int): Target image size for resize and center crop.
 
         Returns:
             AIGenDetDataset: Dataset instance covering the selected shards.
@@ -92,7 +94,7 @@ class AIGenDetDataset(Dataset):
             shard_dirs = [f'shard_{i}' for i in range(0,6)]
         else:
             shard_dirs = [f'shard_{i}' for i in shard_nums]
-        return AIGenDetDataset(root_dir=shard_dir, subset_dirs=shard_dirs, transform=transform)
+        return AIGenDetDataset(root_dir=shard_dir, subset_dirs=shard_dirs, transform=transform, image_size=image_size)
 
 def collate(batch):
     images = torch.stack([item['image'] for item in batch])
