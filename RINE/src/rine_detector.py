@@ -18,6 +18,9 @@ class RINEConfig:
         - `selected_layers` is 1-based and refers to Transformer block indices.
           Example: [1, 3, 6, 9, 12] uses the outputs of blocks 1/3/6/9/12.
         - If `selected_layers` is None, all encoder blocks are used.
+        - `trainable_last_blocks` unfreezes the last K transformer blocks
+          (and final layernorm) when > 0. Overrides `freeze_backbone` for
+          those blocks. Embeddings and earlier blocks stay frozen.
     """
     backbone_name: str = "openai/clip-vit-large-patch14"
     selected_layers: Optional[List[int]] = None
@@ -27,6 +30,7 @@ class RINEConfig:
     supcon_temperature: float = 0.07
     supcon_weight: float = 0.05
     freeze_backbone: bool = True
+    trainable_last_blocks: int = 0
     local_files_only: bool = True
 
 
@@ -37,6 +41,27 @@ class DetectorOutput:
     features: torch.Tensor
     tie_weights: Optional[torch.Tensor] = None
     cls_stack: Optional[torch.Tensor] = None
+
+
+class DetectorDataParallel(nn.DataParallel):
+    """DataParallel that gathers DetectorOutput correctly."""
+
+    def gather(self, outputs, output_device):
+        if isinstance(outputs[0], DetectorOutput):
+            return DetectorOutput(
+                logits=torch.cat([o.logits.to(output_device) for o in outputs]),
+                probabilities=torch.cat([o.probabilities.to(output_device) for o in outputs]),
+                features=torch.cat([o.features.to(output_device) for o in outputs]),
+                tie_weights=outputs[0].tie_weights,
+                cls_stack=torch.cat([o.cls_stack.to(output_device) for o in outputs])
+                if outputs[0].cls_stack is not None else None,
+            )
+        return super().gather(outputs, output_device)
+
+
+def unwrap_model(model: nn.Module) -> nn.Module:
+    """Unwrap DataParallel/DDP to get the underlying model."""
+    return model.module if hasattr(model, "module") else model
 
 
 class LayerwiseProjection(nn.Module):
@@ -223,6 +248,11 @@ class RINECLIPDetector(nn.Module):
         if self.config.freeze_backbone:
             self.backbone.requires_grad_(False)
 
+        # Partial fine-tuning: unfreeze last K transformer blocks + final LN.
+        self.trainable_last_blocks = int(max(0, self.config.trainable_last_blocks))
+        if self.trainable_last_blocks > 0:
+            self._unfreeze_last_blocks(self.trainable_last_blocks)
+
         self.q1 = LayerwiseProjection(
             input_dim=self.hidden_size,
             output_dim=self.config.proj_dim,
@@ -244,14 +274,51 @@ class RINECLIPDetector(nn.Module):
             dropout=self.config.dropout,
         )
 
+    def _unfreeze_last_blocks(self, k: int) -> None:
+        """Unfreeze last K encoder blocks + final layernorm for partial fine-tuning."""
+        encoder = self.backbone.vision_model.encoder
+        num_layers = len(encoder.layers)
+        k = min(k, num_layers)
+        for i in range(num_layers - k, num_layers):
+            for p in encoder.layers[i].parameters():
+                p.requires_grad_(True)
+        # final layernorm helps FT stability
+        if hasattr(self.backbone.vision_model, "post_layernorm"):
+            for p in self.backbone.vision_model.post_layernorm.parameters():
+                p.requires_grad_(True)
+
+    def get_partial_ft_param_groups(self, head_lr: float, backbone_lr: float):
+        """Return optimizer param groups with differential LR for phase-2 training."""
+        backbone_params = [p for p in self.backbone.parameters() if p.requires_grad]
+        head_params = (
+            list(self.q1.parameters())
+            + list(self.tie.parameters())
+            + list(self.q2.parameters())
+            + list(self.classifier.parameters())
+        )
+        return [
+            {"params": head_params, "lr": head_lr},
+            {"params": backbone_params, "lr": backbone_lr},
+        ]
+
+    def set_trainable_last_blocks(self, k: int) -> None:
+        """Runtime switch: freeze backbone, then unfreeze last K blocks. Used for phase transitions."""
+        self.backbone.requires_grad_(False)
+        self.trainable_last_blocks = int(max(0, k))
+        if self.trainable_last_blocks > 0:
+            self._unfreeze_last_blocks(self.trainable_last_blocks)
+
+    def _backbone_is_fully_frozen(self) -> bool:
+        return all(not p.requires_grad for p in self.backbone.parameters())
+
     def train(self, mode: bool = True) -> "RINECLIPDetector":
         super().train(mode)
-        if self.config.freeze_backbone:
+        if self.config.freeze_backbone and self._backbone_is_fully_frozen():
             self.backbone.eval()
         return self
 
     def _extract_cls_stack(self, pixel_values: torch.Tensor) -> torch.Tensor:
-        if self.config.freeze_backbone:
+        if self._backbone_is_fully_frozen():
             with torch.no_grad():
                 outputs = self.backbone(pixel_values=pixel_values, output_hidden_states=True)
         else:
@@ -354,6 +421,32 @@ def compute_detector_loss(
         "loss_supcon": float(supcon_value.detach().cpu()),
     }
     return total, stats
+
+
+def compute_consistency_loss(
+    weak_output: DetectorOutput,
+    strong_output: DetectorOutput,
+    consistency_type: str = "logit",
+) -> torch.Tensor:
+    """
+    Consistency regularization between weak/strong views.
+
+    Logit consistency uses MSE on sigmoid probabilities instead of raw logits so
+    the target stays bounded and training remains numerically stable.
+    Feature consistency uses the normalized penultimate features already exposed
+    by DetectorOutput.
+    """
+    consistency_type = consistency_type.lower()
+    if consistency_type == "logit":
+        weak_target = weak_output.probabilities.detach()
+        return F.mse_loss(strong_output.probabilities, weak_target)
+
+    if consistency_type == "feature":
+        weak_target = weak_output.features.detach()
+        cosine = F.cosine_similarity(strong_output.features, weak_target, dim=-1)
+        return 1.0 - cosine.mean()
+
+    raise ValueError(f"Unsupported consistency_type: {consistency_type}")
 
 
 def count_trainable_parameters(module: nn.Module) -> int:

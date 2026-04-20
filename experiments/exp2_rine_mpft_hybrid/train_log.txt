@@ -1,0 +1,48 @@
+data_root=/home/w2/suho/datasets/ntire2026/train
+train_samples=50000 val=10000 val_hard=2500
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:314: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = GradScaler(enabled=amp_enabled)
+Phase 1 trainable params: 529,153
+warmup_epochs=2 trainable_last_blocks=4
+head_lr=0.0002 backbone_lr=1e-05
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 01 | phase 1] train_loss=0.8257 bce=0.5405 supcon=5.7059 | val_auc=0.8393 val_ap=0.8567 val_acc=0.7669 | val_hard_auc=0.7085 val_hard_ap=0.7309 val_hard_acc=0.6556 | time train=00:16:32 val=00:00:21 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08402034640312195), (8, 0.08398938179016113), (9, 0.0839536115527153), (11, 0.08374316990375519), (10, 0.0836888998746872)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 02 | phase 1] train_loss=0.6311 bce=0.3520 supcon=5.5804 | val_auc=0.8787 val_ap=0.8821 val_acc=0.7994 | val_hard_auc=0.7478 val_hard_ap=0.7681 val_hard_acc=0.6876 | time train=00:15:04 val=00:00:20 val_hard=00:00:07
+  top_tie(val)=[(7, 0.0846690982580185), (8, 0.08441619575023651), (9, 0.0840875506401062), (6, 0.08378229290246964), (10, 0.08355650305747986)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:339: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = GradScaler(enabled=amp_enabled)  # reset scaler on phase change
+[phase-transition] epoch 3: unfroze last 4 blocks. Trainable params: 28,882,177
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 03 | phase 2] train_loss=0.5719 bce=0.2955 supcon=5.5277 | val_auc=0.8974 val_ap=0.9051 val_acc=0.8101 | val_hard_auc=0.7786 val_hard_ap=0.8076 val_hard_acc=0.7136 | time train=00:15:10 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08504194021224976), (8, 0.0846204161643982), (9, 0.08422617614269257), (6, 0.08390437811613083), (10, 0.08349902182817459)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 04 | phase 2] train_loss=0.5229 bce=0.2490 supcon=5.4794 | val_auc=0.9093 val_ap=0.9162 val_acc=0.8220 | val_hard_auc=0.7987 val_hard_ap=0.8232 val_hard_acc=0.7324 | time train=00:15:17 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08524646610021591), (8, 0.08458968997001648), (9, 0.0842730924487114), (6, 0.08395549654960632), (10, 0.08358684927225113)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 05 | phase 2] train_loss=0.4979 bce=0.2255 supcon=5.4471 | val_auc=0.9118 val_ap=0.9201 val_acc=0.8257 | val_hard_auc=0.7986 val_hard_ap=0.8269 val_hard_acc=0.7328 | time train=00:14:09 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08547438681125641), (8, 0.08459565788507462), (9, 0.08432915806770325), (6, 0.0839962363243103), (10, 0.08364152163267136)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 06 | phase 2] train_loss=0.4862 bce=0.2148 supcon=5.4278 | val_auc=0.9098 val_ap=0.9197 val_acc=0.8234 | val_hard_auc=0.8038 val_hard_ap=0.8343 val_hard_acc=0.7420 | time train=00:14:29 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08564051240682602), (8, 0.08453705161809921), (9, 0.0843290239572525), (6, 0.0841376781463623), (10, 0.08365638554096222)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 07 | phase 2] train_loss=0.4715 bce=0.2009 supcon=5.4123 | val_auc=0.9154 val_ap=0.9249 val_acc=0.8332 | val_hard_auc=0.8099 val_hard_ap=0.8400 val_hard_acc=0.7472 | time train=00:15:00 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08578057587146759), (8, 0.08448231220245361), (9, 0.08432521671056747), (6, 0.08417148888111115), (10, 0.08367624133825302)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 08 | phase 2] train_loss=0.4677 bce=0.1975 supcon=5.4051 | val_auc=0.9215 val_ap=0.9296 val_acc=0.8356 | val_hard_auc=0.8157 val_hard_ap=0.8413 val_hard_acc=0.7444 | time train=00:14:46 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08593262732028961), (8, 0.08450216799974442), (9, 0.08434850722551346), (6, 0.08422809839248657), (10, 0.08365891873836517)]
+/home/w2/suho/NTIRE2026/RINE/train_rine_mpft_hybrid.py:243: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[epoch 09 | phase 2] train_loss=0.4533 bce=0.1840 supcon=5.3851 | val_auc=0.9173 val_ap=0.9260 val_acc=0.8331 | val_hard_auc=0.8139 val_hard_ap=0.8390 val_hard_acc=0.7416 | time train=00:14:46 val=00:00:18 val_hard=00:00:07
+  top_tie(val)=[(7, 0.08604979515075684), (8, 0.08442077040672302), (9, 0.08432112634181976), (6, 0.08429700136184692), (10, 0.08368861675262451)]
+Total training time: 02:19:09
+Artifacts: /home/w2/suho/NTIRE2026/RINE/outputs/rine_mpft_hybrid
