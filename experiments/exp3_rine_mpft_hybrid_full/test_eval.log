@@ -1,0 +1,15 @@
+Device: cuda
+Loaded checkpoint: /home/w2/suho/NTIRE2026/RINE/outputs/rine_mpft_hybrid_full/rine_mpft_hybrid_full_best_model.pt
+Test images: 2500
+  batch 5/20 done
+  batch 10/20 done
+  batch 15/20 done
+  batch 20/20 done
+Inference done in 4.8s
+Saved 2500 predictions to /home/w2/suho/NTIRE2026/RINE/outputs/rine_mpft_hybrid_full/test_predictions.csv
+Pred stats: mean=0.3317 std=0.3965 min=0.0000 max=1.0000
+Evaluation on 2500 labeled samples:
+  AUC:  0.7721
+  AP:   0.8023
+  ACC:  0.6888
+  EER:  0.3084
